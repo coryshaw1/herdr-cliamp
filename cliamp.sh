@@ -138,6 +138,7 @@ show_status() {
   pos="$(printf '%s' "$json"    | jq -r '.position // 0')"
   dur="$(printf '%s' "$json"    | jq -r '.duration // 0')"
   stream="$(printf '%s' "$json" | jq -r '.track.stream // false')"
+  station="$(printf '%s' "$json" | jq -r '.track.station // ""')"
 
   icon="$(icon_for "$state")"
   [ -n "$title" ] || title="(nothing loaded)"
@@ -150,15 +151,26 @@ show_status() {
     progress="live · $(hms "$pos")"
   fi
 
-  meta="$artist"
-  [ -n "$album" ] && [ "$album" != "$artist" ] && meta="${meta:+$meta — }$album"
+  # For radio, cliamp reports the live song as the title and preserves the
+  # station separately, so show both: station as the headline, song beneath it.
+  # Older cliamp builds send no .station, in which case the title IS the station
+  # and there is nothing to stack.
+  if [ -n "$station" ]; then
+    headline="$station"
+    meta="$title"
+    [ -n "$artist" ] && meta="$artist — $title"
+  else
+    headline="$title"
+    meta="$artist"
+    [ -n "$album" ] && [ "$album" != "$artist" ] && meta="${meta:+$meta — }$album"
+  fi
 
   body="$meta"
   [ -n "$progress" ] && body="${body:+$body
 }$progress"
   [ -n "$body" ] || body="$state"
 
-  toast "$icon $title" "$body"
+  toast "$icon $headline" "$body"
 }
 
 # A transport command only makes sense against a running player.

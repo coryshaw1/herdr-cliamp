@@ -179,6 +179,10 @@ play over the first while answering for neither.
 ## Limitations
 
 - **`allow_nested` is experimental** in herdr, by herdr's own labelling.
+- **Radio metadata needs a recent cliamp.** Showing station + artist/song
+  requires cliamp's IPC status to report `station` and resolve `title`/`artist`
+  from the live ICY tag. Older builds send only the station name, and the toast
+  degrades to that plus progress.
 - **No auto-popping toasts on track change.** herdr cannot observe CLIAmp's
   internal events; the status action is pull-based. A CLIAmp Lua plugin hooking
   `track.change` could push them, but note `cliamp.exec.run()` passes only
