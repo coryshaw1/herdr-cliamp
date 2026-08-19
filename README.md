@@ -8,6 +8,17 @@ Press a key: cliamp floats in the middle of your screen. Press detach: the float
 disappears and the audio keeps playing. Now-playing toasts and play/pause work
 from any workspace without opening the float at all.
 
+## Screenshots
+
+The floating player over your work — press your `open` key, and detach to hide it
+while the audio keeps going:
+
+![The cliamp float open over a herdr workspace](docs/float.png)
+
+Now playing, without opening the float at all:
+
+![A now-playing toast in the corner of a herdr workspace](docs/toast.png)
+
 ## The problem this solves
 
 Cliamp keeps its audio player *inside* the TUI process. A normal floating pane
