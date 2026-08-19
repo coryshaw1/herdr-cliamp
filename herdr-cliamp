@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Launcher so a herdr popup keybind can be a bare command instead of an absolute
+# path to cliamp.sh.
+#
+# A popup is spawned by herdr's config, not as a plugin action, so it never
+# receives HERDR_PLUGIN_ROOT and cannot locate the plugin directory itself.
+# Symlink this onto your PATH once and the keybind stays portable:
+#
+#   ln -s "$PWD/herdr-cliamp" ~/.local/bin/herdr-cliamp
+#
+#   [[keys.command]]
+#   key = "prefix+m"
+#   type = "popup"
+#   command = "herdr-cliamp attach"
+#
+# Resolves its own directory through any symlink chain, so cliamp.sh is found
+# wherever the plugin actually lives.
+set -uo pipefail
+
+target="${BASH_SOURCE[0]:-$0}"
+while [ -L "$target" ]; do
+  link="$(readlink "$target")"
+  case "$link" in
+    /*) target="$link" ;;
+    *)  target="$(dirname "$target")/$link" ;;
+  esac
+done
+root="$(cd "$(dirname "$target")" && pwd)"
+
+exec bash "$root/cliamp.sh" "$@"
