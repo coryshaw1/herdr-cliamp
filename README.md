@@ -58,8 +58,10 @@ allow_nested = true
 Without this, opening the float fails with *"nested herdr is disabled by
 default"*.
 
-**2. Bind the actions.** herdr plugins cannot declare keybindings, so add these
-yourself (adjust keys to taste):
+**2. Bind the actions.** herdr plugins cannot declare keybindings, so add the
+ones you want (adjust keys to taste). All five actions are listed here; the
+transport ones are equally usable from herdr's action menu if you would rather
+not spend keys on them.
 
 ```toml
   [[keys.command]]
@@ -75,13 +77,29 @@ yourself (adjust keys to taste):
   description = "cliamp: now playing"
 
   [[keys.command]]
-  key = "prefix+p"
+  key = "prefix+i"
   type = "plugin_action"
   command = "herdr-cliamp.toggle"
   description = "cliamp: play/pause"
+
+  [[keys.command]]
+  key = "prefix+t"
+  type = "plugin_action"
+  command = "herdr-cliamp.next"
+  description = "cliamp: next track"
+
+  [[keys.command]]
+  key = "prefix+u"
+  type = "plugin_action"
+  command = "herdr-cliamp.prev"
+  description = "cliamp: previous track"
 ```
 
 Then `herdr server reload-config`.
+
+`m`, `t`, `u`, `i`, plus `a`, `f`, and `y`, are the single letters herdr's
+defaults leave free. `prefix+p` reads more naturally for play/pause, but it is
+herdr's default `previous_tab` — see the note below if you want to reclaim it.
 
 > **Check for conflicts.** herdr resolves a duplicate binding by *silently
 > disabling* one side. `herdr server reload-config` prints `"status":"applied"`
