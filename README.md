@@ -118,10 +118,11 @@ All five also appear in herdr's action menu, and run via
 
 ## Configuration
 
-Optional. Copy the example into the plugin's config dir:
+All optional — the defaults work unconfigured. To change one, set it in
+`config.sh` in the plugin's config dir, which is sourced on every run:
 
 ```sh
-cp config.sh.example "$(herdr plugin config-dir herdr-cliamp)/config.sh"
+echo 'CLIAMP_SESSION=music' >> "$(herdr plugin config-dir herdr-cliamp)/config.sh"
 ```
 
 | Variable | Default | Meaning |
@@ -129,7 +130,7 @@ cp config.sh.example "$(herdr plugin config-dir herdr-cliamp)/config.sh"
 | `CLIAMP_SESSION` | `music` | Name of the herdr session hosting the player |
 | `CLIAMP_CMD` | `cliamp` | Launch command (add flags here) |
 | `CLIAMP_TOAST_POSITION` | `top-right` | Toast corner |
-| `CLIAMP_MAIN_SOCKET` | main session socket | Where toasts are sent |
+| `CLIAMP_MAIN_SOCKET` | main session socket | Where toasts are sent. Pointing this at the player session would render them where nobody can see them. |
 
 ### Keybindings inside the float
 
@@ -147,9 +148,23 @@ config dir with your own `[keys]` block copied from your main config; it takes
 precedence over the bundled one:
 
 ```sh
-cp session.toml "$(herdr plugin config-dir herdr-cliamp)/session.toml"
-# then edit its [keys] to mirror your main config.toml
+cat > "$(herdr plugin config-dir herdr-cliamp)/session.toml" <<'EOF'
+[keys]
+prefix = "ctrl+a"        # your prefix, and any other keys you want to match
+detach = "prefix+d"
+
+[ui]
+sidebar_start_collapsed = true
+sidebar_collapsed_mode = "hidden"
+hide_tab_bar_when_single_tab = true
+
+[experimental]
+allow_nested = true
+EOF
 ```
+
+Copy in whatever `[keys]` you use; keep the `[ui]` and `[experimental]` blocks,
+since your file replaces the bundled one rather than extending it.
 
 herdr has no config-include mechanism, so this is a copy: if you rebind keys
 later, mirror the change here too.
