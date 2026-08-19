@@ -30,6 +30,11 @@ for d in "$HOME/.local/bin" /opt/homebrew/bin /usr/local/bin /usr/bin /bin; do
 done
 export PATH
 
+# The docs recommend HERDR_BIN_PATH so a plugin calls the same herdr binary that
+# launched it. It is only set for plugin-invoked commands, so fall back to PATH
+# for the popup keybind path.
+HERDR="${HERDR_BIN_PATH:-herdr}"
+
 # ---- configuration ----------------------------------------------------------
 # Override in $HERDR_PLUGIN_CONFIG_DIR/config.sh (herdr plugin config-dir
 # herdr-cliamp), which is sourced before anything else is derived.
@@ -86,7 +91,7 @@ PY
 }
 
 toast() {
-  HERDR_SOCKET_PATH="$MAIN_SOCK" herdr notification show "$1" \
+  HERDR_SOCKET_PATH="$MAIN_SOCK" "$HERDR" notification show "$1" \
     --body "$2" --position "$TOAST_POSITION" --sound none >/dev/null 2>&1
 }
 
@@ -185,7 +190,7 @@ transport() {
 
 # ---- session bootstrap ------------------------------------------------------
 session_running() {
-  herdr session list 2>/dev/null \
+  "$HERDR" session list 2>/dev/null \
     | awk -v s="$SESSION" '$1==s && $2=="running"{f=1} END{exit !f}'
 }
 
@@ -202,7 +207,7 @@ ensure_session() {
   [ -f "$session_config" ] && export HERDR_CONFIG_PATH="$session_config"
 
   if ! session_running; then
-    herdr --session "$SESSION" server >/dev/null 2>&1 &
+    "$HERDR" --session "$SESSION" server >/dev/null 2>&1 &
     local i
     for i in $(seq 1 40); do
       [ -S "$SESSION_SOCK" ] && break
@@ -251,7 +256,7 @@ except Exception: pass' 2>/dev/null
 # ---- entry points -----------------------------------------------------------
 case "${1:-}" in
   open)
-    need herdr || exit 1
+    need "$HERDR" || exit 1
     ensure_session || { toast "cliamp" "Could not start the $SESSION session"; exit 1; }
     # Hand off to the plugin-owned overlay pane, which runs `attach` below.
     #
@@ -260,18 +265,23 @@ case "${1:-}" in
     # running `attach` here -- an action has no controlling terminal, so the
     # attach would panic in terminal init (ratatui, exit 101) instead of opening
     # anything. Report the failure instead.
-    # No plugin pane: herdr's "overlay" placement is a split, not a float (see
-    # herdr-plugin.toml). The true float is a config-level `type = "popup"` bound
-    # to `cliamp.sh attach`. This action just prepares the session and tells the
-    # user, so it stays useful in herdr's action menu.
-    toast "cliamp ready" "Use your popup keybind to open the float"
+    # Reuse an open float rather than stacking another popup.
+    if [ -n "$(find_player_pane)" ]; then
+      exit 0
+    fi
+    # Flags must be space-separated: herdr 0.8.0 rejects --plugin=X.
+    if ! "$HERDR" plugin pane open --plugin herdr-cliamp --entrypoint player \
+         >/dev/null 2>&1; then
+      toast "cliamp" "Could not open the player pane"
+      exit 1
+    fi
     ;;
   attach)
-    need herdr || exit 1
+    need "$HERDR" || exit 1
     ensure_session
     # Takes over only this (floating popup) terminal. Detaching hides the float
     # and leaves playback running.
-    exec herdr session attach "$SESSION"
+    exec "$HERDR" session attach "$SESSION"
     ;;
   status)
     need cliamp || exit 1; need jq || exit 1

@@ -58,35 +58,15 @@ allow_nested = true
 Without this, opening the float fails with *"nested herdr is disabled by
 default"*.
 
-**2. Put the launcher on your PATH.** The floating player is bound as a herdr
-`popup`, which herdr spawns from your config rather than as a plugin action — so
-it never receives `HERDR_PLUGIN_ROOT` and cannot find the plugin on its own. A
-symlink keeps the keybind free of absolute paths:
-
-```sh
-# from a checkout, or from wherever `herdr plugin install` put the plugin
-ln -s "$PWD/herdr-cliamp" ~/.local/bin/herdr-cliamp
-```
-
-`herdr plugin list` prints the plugin's path if you installed it from GitHub
-rather than a checkout.
-
-**3. Bind the keys.** herdr plugins cannot declare keybindings, so add these
-yourself (adjust keys to taste).
-
-The float must be `type = "popup"` — herdr's plugin-pane placements
-(`overlay`, `split`, `tab`, `zoomed`) all split the current tab rather than
-floating over it, so only a config-level popup gives a centred, session-modal
-player:
+**2. Bind the actions.** herdr plugins cannot declare keybindings, so add these
+yourself (adjust keys to taste):
 
 ```toml
   [[keys.command]]
   key = "prefix+m"
-  type = "popup"
-  command = "herdr-cliamp attach"
+  type = "plugin_action"
+  command = "herdr-cliamp.open"
   description = "cliamp: floating player"
-  width = "80%"
-  height = "80%"
 
   [[keys.command]]
   key = "prefix+M"
