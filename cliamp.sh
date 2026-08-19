@@ -33,6 +33,10 @@ export PATH
 # ---- configuration ----------------------------------------------------------
 # Override in $HERDR_PLUGIN_CONFIG_DIR/config.sh (herdr plugin config-dir
 # herdr-cliamp), which is sourced before anything else is derived.
+# Our own directory, so the script works whether herdr invokes it as a plugin
+# action (HERDR_PLUGIN_ROOT set) or a popup keybind runs it directly (not set).
+SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+
 CONFIG_DIR="${HERDR_PLUGIN_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/herdr-cliamp}"
 [ -f "$CONFIG_DIR/config.sh" ] && . "$CONFIG_DIR/config.sh"
 
@@ -124,6 +128,10 @@ show_status() {
   fi
 
   state="$(printf '%s' "$json"  | jq -r '.state // "unknown"')"
+  # cliamp >= the stream-metadata patch resolves .track.title/.artist from the
+  # live ICY tag for radio, and exposes the unsplit value as .track.stream_title.
+  # Older builds report only the station name; both work, the newer one just has
+  # the actual song.
   title="$(printf '%s' "$json"  | jq -r '.track.title // ""')"
   artist="$(printf '%s' "$json" | jq -r '.track.artist // ""')"
   album="$(printf '%s' "$json"  | jq -r '.track.album // ""')"
@@ -176,7 +184,10 @@ ensure_session() {
   # The player session gets its own config (no sidebar/tab bar, keys mirroring
   # the user's) if the plugin ships or the user supplies one.
   local session_config="$CONFIG_DIR/session.toml"
-  [ -f "$session_config" ] || session_config="$HERDR_PLUGIN_ROOT/session.toml"
+  # HERDR_PLUGIN_ROOT is only set when herdr invokes us as a plugin action; the
+  # popup keybind runs this script directly, so fall back to our own directory.
+  # (Unset here would abort the whole script under `set -u`.)
+  [ -f "$session_config" ] || session_config="${HERDR_PLUGIN_ROOT:-$SELF_DIR}/session.toml"
   [ -f "$session_config" ] && export HERDR_CONFIG_PATH="$session_config"
 
   if ! session_running; then
@@ -246,12 +257,6 @@ case "${1:-}" in
     ;;
   attach)
     need herdr || exit 1
-    # Refuse to nest if we are somehow already inside the player session; herdr
-    # has no `session detach` CLI (detaching is a keybind action), so the float
-    # is hidden with the session's own detach key -- prefix+d by default here.
-    if [ "${HERDR_SESSION:-}" = "$SESSION" ]; then
-      exit 0
-    fi
     ensure_session
     # Takes over only this (floating popup) terminal. Detaching hides the float
     # and leaves playback running.
