@@ -225,6 +225,27 @@ cliamp only when it is not already the pane's foreground process. That last chec
 matters — cliamp is a singleton on its IPC socket, and a second instance would
 play over the first while answering for neither.
 
+## Security notes
+
+The plugin runs shell commands, so it is worth being explicit about what it
+trusts:
+
+- **`config.sh` is sourced**, so anything in it executes as you. That is how a
+  shell config works, but it means the file is only as trustworthy as whoever can
+  write it. It lives under `herdr plugin config-dir herdr-cliamp` and should stay
+  writable only by your user.
+- **`CLIAMP_CMD` is executed** in the player pane. Treat it as code, not data.
+- **Values are never interpolated into hand-built JSON.** Requests to herdr's
+  socket are assembled with proper escaping, so a value containing quotes or
+  backslashes cannot alter the request it appears in.
+- **No network access, no credentials.** The plugin talks only to two owner-only
+  (`0600`) unix sockets — herdr's API socket and cliamp's IPC socket — and stores
+  nothing.
+
+None of this is a privilege boundary: an attacker who can already set your
+environment or write your config files can run commands as you regardless of this
+plugin. The escaping above is defence in depth, not a sandbox.
+
 ## Limitations
 
 - **`allow_nested` is experimental** in herdr, by herdr's own labelling.

@@ -66,6 +66,19 @@ need() {
 # ---- herdr socket API -------------------------------------------------------
 # Spoken directly rather than through the CLI: several methods have no CLI
 # surface, and `report-metadata`-style flag parsing is broken in 0.8.0.
+# Build a JSON object from key/value pairs, letting python handle escaping.
+# Hand-written JSON would let a value containing a quote or backslash -- e.g. a
+# crafted CLIAMP_CMD -- break out of its string and alter the request.
+json_obj() {
+  python3 -c '
+import json, sys
+a = sys.argv[1:]
+def val(v):
+    return {"true": True, "false": False}.get(v, v)
+print(json.dumps({k: val(v) for k, v in zip(a[::2], a[1::2])}))
+' "$@"
+}
+
 api() {
   local sock="$1" method="$2" params="$3"
   python3 - "$sock" "$method" "$params" <<'PY' 2>/dev/null
@@ -221,7 +234,7 @@ ensure_session() {
   panes="$(api "$SESSION_SOCK" pane.list '{}')"
   if ! printf '%s' "$panes" | grep -q '"pane_id"'; then
     api "$SESSION_SOCK" workspace.create \
-      "{\"label\":\"Music\",\"cwd\":\"$HOME\",\"focus\":true}" >/dev/null
+      "$(json_obj label Music cwd "$HOME" focus true)" >/dev/null
     sleep 2
     panes="$(api "$SESSION_SOCK" pane.list '{}')"
   fi
@@ -234,10 +247,11 @@ except Exception: pass' 2>/dev/null)"
   # Launch only if cliamp is not already this pane's foreground process. Testing
   # the pane (rather than a bare pgrep) keeps the singleton correct: cliamp owns
   # one IPC socket, and a second instance would answer for neither.
-  info="$(api "$SESSION_SOCK" pane.process_info "{\"pane_id\":\"$pane\"}")"
+  info="$(api "$SESSION_SOCK" pane.process_info "$(json_obj pane_id "$pane")")"
   if ! printf '%s' "$info" | grep -q '"argv0":"cliamp"'; then
     api "$SESSION_SOCK" pane.send_text \
-      "{\"pane_id\":\"$pane\",\"text\":\"exec $CLIAMP_CMD\\n\"}" >/dev/null
+      "$(json_obj pane_id "$pane" text "exec $CLIAMP_CMD
+")" >/dev/null
     sleep 1
   fi
 }
