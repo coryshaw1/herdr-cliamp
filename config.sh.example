@@ -1,0 +1,20 @@
+# herdr-cliamp configuration.
+#
+# Copy to the plugin's config dir and edit:
+#   cp config.sh.example "$(herdr plugin config-dir herdr-cliamp)/config.sh"
+#
+# Every setting has a working default, so an empty file is fine.
+
+# Name of the dedicated herdr session hosting the player.
+# CLIAMP_SESSION=music
+
+# Command used to launch the TUI. Add flags here, e.g. "cliamp --provider radio".
+# CLIAMP_CMD=cliamp
+
+# Toast corner: top-left, top-right, bottom-left, bottom-right.
+# CLIAMP_TOAST_POSITION=top-right
+
+# herdr API socket that toasts are sent to. Defaults to the main session's
+# socket, which is almost always what you want -- aiming this at the player
+# session would render toasts where nobody can see them.
+# CLIAMP_MAIN_SOCKET="$HOME/.config/herdr/herdr.sock"

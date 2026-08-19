@@ -1,0 +1,71 @@
+# herdr-cliamp — control CLIAmp (a terminal music/podcast/audiobook TUI) from
+# herdr, without letting it die when you close the view.
+#
+# Install:  herdr plugin install <owner>/herdr-cliamp
+# Local:    herdr plugin link .
+#
+# The design problem this solves: CLIAmp keeps its audio player inside the TUI
+# process, so a plain popup (which closes when its command exits) would stop the
+# music. Instead CLIAmp runs in its own persistent herdr *session*, and the
+# floating pane merely attaches to it. Closing the float detaches; playback
+# continues. Nothing is parked in your working workspaces.
+#
+# herdr plugins cannot declare keybindings, so bind these actions yourself in
+# config.toml with type = "plugin_action" (see README).
+
+id = "herdr-cliamp"
+name = "herdr CLIAmp"
+version = "0.1.0"
+min_herdr_version = "0.8.0"
+description = "Floating CLIAmp that keeps playing when hidden: it lives in a detached herdr session, so closing the float only detaches. Adds now-playing toasts and transport controls that work from any workspace."
+platforms = ["linux", "macos"]
+
+# --- Actions -----------------------------------------------------------------
+# All three route through one entry point (cliamp.sh <subcommand>) so the
+# session bootstrap and status formatting live in exactly one place.
+
+# Open the floating player. Bootstraps the session (and CLIAmp inside it) on
+# first use, then attaches. Bind to e.g. prefix+m.
+[[actions]]
+id = "open"
+title = "CLIAmp: open floating player"
+contexts = ["global"]
+command = ["bash", "cliamp.sh", "open"]
+
+# Now-playing toast: state icon, title, artist/album, progress. Reads CLIAmp's
+# IPC socket, which sits at a fixed path independent of the hosting session, so
+# this works from any workspace without opening the float. Bind to e.g. prefix+M.
+[[actions]]
+id = "status"
+title = "CLIAmp: show now playing"
+contexts = ["global"]
+command = ["bash", "cliamp.sh", "status"]
+
+# Play/pause from anywhere, same reasoning as status. Bind to e.g. prefix+p.
+[[actions]]
+id = "toggle"
+title = "CLIAmp: play/pause"
+contexts = ["global"]
+command = ["bash", "cliamp.sh", "toggle"]
+
+# Skip controls, for anyone who wants them bound; unbound by default.
+[[actions]]
+id = "next"
+title = "CLIAmp: next track"
+contexts = ["global"]
+command = ["bash", "cliamp.sh", "next"]
+
+[[actions]]
+id = "prev"
+title = "CLIAmp: previous track"
+contexts = ["global"]
+command = ["bash", "cliamp.sh", "prev"]
+
+# --- Pane --------------------------------------------------------------------
+# "overlay" is herdr's floating placement. Bind the `open` action rather than
+# this pane directly: `open` guarantees the session and CLIAmp exist first.
+[[panes]]
+id = "player"
+title = "CLIAmp"
+placement = "overlay"
+command = ["bash", "cliamp.sh", "attach"]
