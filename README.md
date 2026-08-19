@@ -1,6 +1,6 @@
 # herdr-cliamp
 
-Control [cliamp](https://github.com/cliamp/cliamp) — a terminal TUI for music,
+Control [cliamp](https://github.com/bjarneo/cliamp) — a terminal TUI for music,
 podcasts, and audiobooks — from [herdr](https://herdr.dev), **without the music
 stopping when you close the player**.
 
