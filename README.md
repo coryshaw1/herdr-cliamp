@@ -36,13 +36,13 @@ client attached, so:
 ## Install
 
 ```sh
-herdr plugin install <owner>/herdr-cliamp
+herdr plugin install coryshaw1/herdr-cliamp
 ```
 
 Or from a checkout:
 
 ```sh
-git clone https://github.com/<owner>/herdr-cliamp
+git clone https://github.com/coryshaw1/herdr-cliamp
 cd herdr-cliamp && herdr plugin link .
 ```
 
