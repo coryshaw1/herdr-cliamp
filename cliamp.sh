@@ -238,23 +238,23 @@ case "${1:-}" in
     # running `attach` here -- an action has no controlling terminal, so the
     # attach would panic in terminal init (ratatui, exit 101) instead of opening
     # anything. Report the failure instead.
-    # Reuse an open float rather than stacking a second overlay on top of it.
-    existing="$(find_player_pane)"
-    if [ -n "$existing" ]; then
-      herdr plugin pane focus "$existing" >/dev/null 2>&1 && exit 0
-    fi
-
-    if ! herdr plugin pane open --plugin herdr-cliamp --entrypoint player \
-         >/dev/null 2>&1; then
-      toast "CLIAmp" "Could not open the player pane"
-      exit 1
-    fi
+    # No plugin pane: herdr's "overlay" placement is a split, not a float (see
+    # herdr-plugin.toml). The true float is a config-level `type = "popup"` bound
+    # to `cliamp.sh attach`. This action just prepares the session and tells the
+    # user, so it stays useful in herdr's action menu.
+    toast "CLIAmp ready" "Use your popup keybind to open the float"
     ;;
   attach)
     need herdr || exit 1
+    # Refuse to nest if we are somehow already inside the player session; herdr
+    # has no `session detach` CLI (detaching is a keybind action), so the float
+    # is hidden with the session's own detach key -- prefix+d by default here.
+    if [ "${HERDR_SESSION:-}" = "$SESSION" ]; then
+      exit 0
+    fi
     ensure_session
-    # Takes over only this (floating) terminal. Detaching hides the float and
-    # leaves playback running.
+    # Takes over only this (floating popup) terminal. Detaching hides the float
+    # and leaves playback running.
     exec herdr session attach "$SESSION"
     ;;
   status)

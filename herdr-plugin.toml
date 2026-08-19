@@ -61,11 +61,22 @@ title = "CLIAmp: previous track"
 contexts = ["global"]
 command = ["bash", "cliamp.sh", "prev"]
 
-# --- Pane --------------------------------------------------------------------
-# "overlay" is herdr's floating placement. Bind the `open` action rather than
-# this pane directly: `open` guarantees the session and CLIAmp exist first.
-[[panes]]
-id = "player"
-title = "CLIAmp"
-placement = "overlay"
-command = ["bash", "cliamp.sh", "attach"]
+# --- No [[panes]] entry -------------------------------------------------------
+# The float is deliberately NOT a plugin pane. herdr's pane placements are
+# "overlay" | "split" | "tab" | "zoomed", and "overlay" is a SPLIT of the
+# current tab (verified against herdr 0.8.0: it produces
+# splits[{direction:"right", ratio:0.5}]), not a centred floating window.
+#
+# Only config-level `type = "popup"` gives a true session-modal float with
+# width/height. Plugins cannot declare keybindings, so the popup is bound in the
+# user's config.toml and runs `cliamp.sh attach` directly:
+#
+#   [[keys.command]]
+#   key = "prefix+m"
+#   type = "popup"
+#   command = "bash ~/.config/herdr/plugins/.../cliamp.sh attach"
+#   width = "80%"
+#   height = "80%"
+#
+# See the README -- `herdr plugin config-dir herdr-cliamp` locates the plugin,
+# and the `open` action remains available for a non-floating (split) view.
