@@ -215,14 +215,40 @@ except Exception: pass' 2>/dev/null)"
   fi
 }
 
+# The plugin pane carries the [[panes]] title as its label, so an already-open
+# float can be found and refocused instead of stacking another overlay.
+find_player_pane() {
+  api "$MAIN_SOCK" pane.list '{}' | python3 -c 'import json,sys
+try:
+    for p in json.load(sys.stdin)["result"]["panes"]:
+        if p.get("label") == "CLIAmp":
+            print(p["pane_id"]); break
+except Exception: pass' 2>/dev/null
+}
+
 # ---- entry points -----------------------------------------------------------
 case "${1:-}" in
   open)
     need herdr || exit 1
     ensure_session || { toast "CLIAmp" "Could not start the $SESSION session"; exit 1; }
     # Hand off to the plugin-owned overlay pane, which runs `attach` below.
-    herdr plugin pane open herdr-cliamp.player >/dev/null 2>&1 \
-      || exec bash "${BASH_SOURCE[0]}" attach
+    #
+    # Flags must be space-separated: herdr 0.8.0 rejects `--plugin=X` ("unknown
+    # option"), and there is no dotted-positional form. Do NOT fall back to
+    # running `attach` here -- an action has no controlling terminal, so the
+    # attach would panic in terminal init (ratatui, exit 101) instead of opening
+    # anything. Report the failure instead.
+    # Reuse an open float rather than stacking a second overlay on top of it.
+    existing="$(find_player_pane)"
+    if [ -n "$existing" ]; then
+      herdr plugin pane focus "$existing" >/dev/null 2>&1 && exit 0
+    fi
+
+    if ! herdr plugin pane open --plugin herdr-cliamp --entrypoint player \
+         >/dev/null 2>&1; then
+      toast "CLIAmp" "Could not open the player pane"
+      exit 1
+    fi
     ;;
   attach)
     need herdr || exit 1
