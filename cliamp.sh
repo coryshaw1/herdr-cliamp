@@ -151,21 +151,20 @@ show_status() {
     progress="live · $(hms "$pos")"
   fi
 
-  # For radio, cliamp reports the live song as the title and preserves the
-  # station separately, so show both: station as the headline, song beneath it.
-  # Older cliamp builds send no .station, in which case the title IS the station
-  # and there is nothing to stack.
-  if [ -n "$station" ]; then
-    headline="$station"
-    meta="$title"
-    [ -n "$artist" ] && meta="$artist — $title"
-  else
-    headline="$title"
-    meta="$artist"
-    [ -n "$album" ] && [ "$album" != "$artist" ] && meta="${meta:+$meta — }$album"
+  # Headline is what is playing; the song leads.
+  headline="$title"
+  [ -n "$artist" ] && headline="$artist — $title"
+
+  # Where it is playing: a station for radio, an album for everything else.
+  # cliamp never reports both, so one line covers either.
+  context="$station"
+  if [ -z "$context" ] && [ "$album" != "$artist" ]; then
+    context="$album"
   fi
 
-  body="$meta"
+  # Skip the context line entirely when there is none, rather than emitting a
+  # blank -- a stream before its first metadata has neither station nor album.
+  body="$context"
   [ -n "$progress" ] && body="${body:+$body
 }$progress"
   [ -n "$body" ] || body="$state"
