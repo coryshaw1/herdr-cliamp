@@ -1,7 +1,7 @@
-# Config for the CLIAmp player session only, selected via HERDR_CONFIG_PATH in
+# Config for the cliamp player session only, selected via HERDR_CONFIG_PATH in
 # cliamp.sh. It never affects your main herdr config.
 #
-# The session hosts a single CLIAmp pane, so the sidebar and tab bar are cut.
+# The session hosts a single cliamp pane, so the sidebar and tab bar are cut.
 #
 # [keys] NOTE: herdr has no config include mechanism, and anything omitted here
 # falls back to herdr's DEFAULTS -- so inside the float `detach` would become

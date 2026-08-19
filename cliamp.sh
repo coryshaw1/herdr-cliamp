@@ -2,7 +2,7 @@
 #
 # herdr-cliamp — one entry point for every plugin action.
 #
-#   cliamp.sh open      bootstrap the session + CLIAmp, then open the float
+#   cliamp.sh open      bootstrap the session + cliamp, then open the float
 #   cliamp.sh attach    attach this terminal to the session (used by the pane)
 #   cliamp.sh status    now-playing toast
 #   cliamp.sh toggle    play/pause
@@ -12,7 +12,7 @@
 # Two independent sockets are in play, and keeping them straight is the whole
 # trick:
 #
-#   * CLIAmp's IPC socket (~/.config/cliamp/cliamp.sock) is at a FIXED path no
+#   * cliamp's IPC socket (~/.config/cliamp/cliamp.sock) is at a FIXED path no
 #     matter which herdr session hosts the TUI. That is why status/toggle/next/
 #     prev work from any workspace without opening the float.
 #
@@ -42,7 +42,7 @@ CONFIG_DIR="${HERDR_PLUGIN_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/herdr-c
 
 # Name of the dedicated herdr session that hosts the player.
 SESSION="${CLIAMP_SESSION:-music}"
-# Command that launches the TUI. `exec` matters: it makes CLIAmp the pane's
+# Command that launches the TUI. `exec` matters: it makes cliamp the pane's
 # process, so quitting it closes the pane instead of dropping to a stray shell.
 CLIAMP_CMD="${CLIAMP_CMD:-cliamp}"
 # Where toasts appear.
@@ -123,7 +123,7 @@ show_status() {
   local json state title artist album pos dur stream icon meta progress body
   json="$(cliamp_json)"
   if [ -z "$json" ] || ! printf '%s' "$json" | jq -e '.ok == true' >/dev/null 2>&1; then
-    toast "CLIAmp not running" "Run the \"CLIAmp: open floating player\" action"
+    toast "cliamp not running" "Run the \"cliamp: open floating player\" action"
     return 0
   fi
 
@@ -175,7 +175,7 @@ show_status() {
 # A transport command only makes sense against a running player.
 transport() {
   if ! cliamp_running; then
-    toast "CLIAmp not running" "Run the \"CLIAmp: open floating player\" action"
+    toast "cliamp not running" "Run the \"cliamp: open floating player\" action"
     return 0
   fi
   cliamp "$1" >/dev/null 2>&1
@@ -189,7 +189,7 @@ session_running() {
     | awk -v s="$SESSION" '$1==s && $2=="running"{f=1} END{exit !f}'
 }
 
-# Ensure the session server, a workspace, and CLIAmp all exist. Safe to re-run:
+# Ensure the session server, a workspace, and cliamp all exist. Safe to re-run:
 # each step is skipped when already satisfied.
 ensure_session() {
   # The player session gets its own config (no sidebar/tab bar, keys mirroring
@@ -210,7 +210,7 @@ ensure_session() {
     done
   fi
 
-  # A fresh session has no workspace; and when CLIAmp is quit its `exec`ed pane
+  # A fresh session has no workspace; and when cliamp is quit its `exec`ed pane
   # exits, taking the tab (and sometimes the workspace) with it.
   local panes pane info
   panes="$(api "$SESSION_SOCK" pane.list '{}')"
@@ -226,8 +226,8 @@ try: print(json.load(sys.stdin)["result"]["panes"][0]["pane_id"])
 except Exception: pass' 2>/dev/null)"
   [ -n "$pane" ] || return 1
 
-  # Launch only if CLIAmp is not already this pane's foreground process. Testing
-  # the pane (rather than a bare pgrep) keeps the singleton correct: CLIAmp owns
+  # Launch only if cliamp is not already this pane's foreground process. Testing
+  # the pane (rather than a bare pgrep) keeps the singleton correct: cliamp owns
   # one IPC socket, and a second instance would answer for neither.
   info="$(api "$SESSION_SOCK" pane.process_info "{\"pane_id\":\"$pane\"}")"
   if ! printf '%s' "$info" | grep -q '"argv0":"cliamp"'; then
@@ -243,7 +243,7 @@ find_player_pane() {
   api "$MAIN_SOCK" pane.list '{}' | python3 -c 'import json,sys
 try:
     for p in json.load(sys.stdin)["result"]["panes"]:
-        if p.get("label") == "CLIAmp":
+        if p.get("label") == "cliamp":
             print(p["pane_id"]); break
 except Exception: pass' 2>/dev/null
 }
@@ -252,7 +252,7 @@ except Exception: pass' 2>/dev/null
 case "${1:-}" in
   open)
     need herdr || exit 1
-    ensure_session || { toast "CLIAmp" "Could not start the $SESSION session"; exit 1; }
+    ensure_session || { toast "cliamp" "Could not start the $SESSION session"; exit 1; }
     # Hand off to the plugin-owned overlay pane, which runs `attach` below.
     #
     # Flags must be space-separated: herdr 0.8.0 rejects `--plugin=X` ("unknown
@@ -264,7 +264,7 @@ case "${1:-}" in
     # herdr-plugin.toml). The true float is a config-level `type = "popup"` bound
     # to `cliamp.sh attach`. This action just prepares the session and tells the
     # user, so it stays useful in herdr's action menu.
-    toast "CLIAmp ready" "Use your popup keybind to open the float"
+    toast "cliamp ready" "Use your popup keybind to open the float"
     ;;
   attach)
     need herdr || exit 1

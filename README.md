@@ -1,22 +1,22 @@
 # herdr-cliamp
 
-Control [CLIAmp](https://github.com/cliamp/cliamp) — a terminal TUI for music,
+Control [cliamp](https://github.com/cliamp/cliamp) — a terminal TUI for music,
 podcasts, and audiobooks — from [herdr](https://herdr.dev), **without the music
 stopping when you close the player**.
 
-Press a key: CLIAmp floats in the middle of your screen. Press detach: the float
+Press a key: cliamp floats in the middle of your screen. Press detach: the float
 disappears and the audio keeps playing. Now-playing toasts and play/pause work
 from any workspace without opening the float at all.
 
 ## The problem this solves
 
-CLIAmp keeps its audio player *inside* the TUI process. A normal floating pane
+Cliamp keeps its audio player *inside* the TUI process. A normal floating pane
 (herdr's `type = "popup"`, tmux's `display-popup`) runs a command and closes when
-that command exits — so quitting the player would stop the music. Parking CLIAmp
+that command exits — so quitting the player would stop the music. Parking cliamp
 in a regular tab works, but then it permanently occupies a tab, and closing that
 tab kills playback too.
 
-Instead, CLIAmp runs in its own **persistent herdr session**, and the floating
+Instead, cliamp runs in its own **persistent herdr session**, and the floating
 pane merely *attaches* to it. A herdr session's server keeps running with no
 client attached, so:
 
@@ -84,7 +84,7 @@ player:
   key = "prefix+m"
   type = "popup"
   command = "herdr-cliamp attach"
-  description = "CLIAmp: floating player"
+  description = "cliamp: floating player"
   width = "80%"
   height = "80%"
 
@@ -92,13 +92,13 @@ player:
   key = "prefix+M"
   type = "plugin_action"
   command = "herdr-cliamp.status"
-  description = "CLIAmp: now playing"
+  description = "cliamp: now playing"
 
   [[keys.command]]
   key = "prefix+p"
   type = "plugin_action"
   command = "herdr-cliamp.toggle"
-  description = "CLIAmp: play/pause"
+  description = "cliamp: play/pause"
 ```
 
 Then `herdr server reload-config`.
@@ -120,7 +120,7 @@ Then `herdr server reload-config`.
 | `herdr-cliamp.next` | Next track | No |
 | `herdr-cliamp.prev` | Previous track | No |
 
-`status`, `toggle`, `next`, and `prev` work from anywhere because CLIAmp's IPC
+`status`, `toggle`, `next`, and `prev` work from anywhere because cliamp's IPC
 socket sits at a fixed path (`~/.config/cliamp/cliamp.sock`) regardless of which
 herdr session hosts the TUI.
 
@@ -129,11 +129,11 @@ All five also appear in herdr's action menu, and run via
 
 ## Using it
 
-- **Open**: your `open` key. First use starts the session and CLIAmp; later uses
+- **Open**: your `open` key. First use starts the session and cliamp; later uses
   just attach.
 - **Hide**: detach inside the float (`prefix+d` with the session's own prefix).
   The music keeps playing.
-- **Quit for real**: quit CLIAmp itself (`q`). Its pane exits, and the next
+- **Quit for real**: quit cliamp itself (`q`). Its pane exits, and the next
   `open` starts it fresh.
 
 ## Configuration
@@ -186,14 +186,14 @@ your session (default)                player session ("music")
 ```
 
 `cliamp.sh` is the single entry point for every action. It keeps two sockets
-straight: CLIAmp's fixed IPC socket (for playback state) and herdr's
+straight: cliamp's fixed IPC socket (for playback state) and herdr's
 *per-session* API socket — toasts must target the **main** session, or they
 render in the hidden session where nobody can see them.
 
 The session bootstrap is idempotent and self-healing: it restarts the session
 server if stopped, recreates the workspace if the pane is gone, and launches
-CLIAmp only when it is not already the pane's foreground process. That last check
-matters — CLIAmp is a singleton on its IPC socket, and a second instance would
+cliamp only when it is not already the pane's foreground process. That last check
+matters — cliamp is a singleton on its IPC socket, and a second instance would
 play over the first while answering for neither.
 
 ## Limitations
@@ -203,8 +203,8 @@ play over the first while answering for neither.
   requires cliamp's IPC status to report `station` and resolve `title`/`artist`
   from the live ICY tag. Older builds send only the station name, and the toast
   degrades to that plus progress.
-- **No auto-popping toasts on track change.** herdr cannot observe CLIAmp's
-  internal events; the status action is pull-based. A CLIAmp Lua plugin hooking
+- **No auto-popping toasts on track change.** herdr cannot observe cliamp's
+  internal events; the status action is pull-based. A cliamp Lua plugin hooking
   `track.change` could push them, but note `cliamp.exec.run()` passes only
   `PATH`/`HOME`/`LANG` to subprocesses, so it needs a wrapper that sets
   `HERDR_SOCKET_PATH` itself.
