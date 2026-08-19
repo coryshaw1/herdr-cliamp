@@ -131,11 +131,16 @@ cp config.sh.example "$(herdr plugin config-dir herdr-cliamp)/config.sh"
 | `CLIAMP_TOAST_POSITION` | `top-right` | Toast corner |
 | `CLIAMP_MAIN_SOCKET` | main session socket | Where toasts are sent |
 
-### Matching your keybindings inside the float
+### Keybindings inside the float
 
-The player session loads its own herdr config (no sidebar, no tab bar). Anything
-it does not set falls back to **herdr's defaults** — so by default the float uses
-`ctrl+b` as its prefix, not whatever you use.
+The player session loads its own small herdr config (`session.toml`), which sets
+only the sidebar/tab-bar trim and `allow_nested`. It deliberately does not
+declare `[keys]`, so it never overrides a preference of yours.
+
+One consequence to know: `HERDR_CONFIG_PATH` *replaces* a config rather than
+merging with one, so keys the plugin omits fall back to **herdr's defaults**, not
+to your settings. Inside the float the prefix is therefore `ctrl+b`, and detach is
+`ctrl+b d`.
 
 To make the float match your muscle memory, drop a `session.toml` into the plugin
 config dir with your own `[keys]` block copied from your main config; it takes

@@ -1,32 +1,24 @@
 # Config for the cliamp player session only, selected via HERDR_CONFIG_PATH in
-# cliamp.sh. It never affects your main herdr config.
+# cliamp.sh. It never touches your own herdr config.
 #
-# The session hosts a single cliamp pane, so the sidebar and tab bar are cut.
+# Deliberately minimal: it sets only what the float needs, so nothing here
+# overrides a preference of yours that the float has no business changing.
 #
-# [keys] NOTE: herdr has no config include mechanism, and anything omitted here
-# falls back to herdr's DEFAULTS -- so inside the float `detach` would become
-# prefix+q rather than whatever you use. If you have customised your keys, copy
-# your own [keys] block into $HERDR_PLUGIN_CONFIG_DIR/session.toml (which takes
-# precedence over this file) so the float matches your muscle memory.
-
-onboarding = false
-
-[keys]
-# herdr's defaults, spelled out so the float is predictable. Override by
-# supplying your own session.toml in the plugin config dir.
-prefix = "ctrl+b"
-detach = "prefix+d"
+# IMPORTANT -- HERDR_CONFIG_PATH replaces a config rather than merging with one,
+# so anything omitted below falls back to herdr's DEFAULTS, not to your settings.
+# That means the float uses herdr's default ctrl+b prefix (detach: ctrl+b d). To
+# make it match your own keybindings, copy this file to
+#   "$(herdr plugin config-dir herdr-cliamp)/session.toml"
+# and add your [keys] block; a copy there takes precedence over this one.
 
 [ui]
-# Nothing to navigate in a one-pane session.
+# One pane, so there is nothing to navigate and no tab strip worth the rows.
 sidebar_start_collapsed = true
 sidebar_collapsed_mode = "hidden"
 hide_tab_bar_when_single_tab = true
 
-confirm_close = false
-prompt_new_tab_name = false
-
 [experimental]
 # The float attaches to this session from inside a herdr-managed pane, which
-# herdr blocks unless nesting is allowed. Required in your MAIN config too.
+# herdr refuses unless nesting is allowed. Also required in your OWN config --
+# see the README's Setup step.
 allow_nested = true
