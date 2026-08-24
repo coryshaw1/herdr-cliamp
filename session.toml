@@ -6,7 +6,7 @@
 #
 # IMPORTANT -- HERDR_CONFIG_PATH replaces a config rather than merging with one,
 # so anything omitted below falls back to herdr's DEFAULTS, not to your settings.
-# That means the float uses herdr's default ctrl+b prefix (detach: ctrl+b d). To
+# That means the float uses herdr's default ctrl+b prefix (detach: ctrl+b q). To
 # make it match your own keybindings, copy this file to
 #   "$(herdr plugin config-dir herdr-cliamp)/session.toml"
 # and add your [keys] block; a copy there takes precedence over this one.

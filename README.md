@@ -140,7 +140,8 @@ All five also appear in herdr's action menu, and run via
 
 - **Open**: your `open` key. First use starts the session and cliamp; later uses
   just attach.
-- **Hide**: detach inside the float (`prefix+d` with the session's own prefix).
+- **Hide**: detach inside the float (`prefix+q` — herdr's default detach, with
+  the float's own prefix, so `ctrl+b q` unless you give it a `[keys]` block).
   The music keeps playing.
 - **Quit for real**: quit cliamp itself (`q`). Its pane exits, and the next
   `open` starts it fresh.
@@ -170,7 +171,8 @@ declare `[keys]`, so it never overrides a preference of yours.
 One consequence to know: `HERDR_CONFIG_PATH` *replaces* a config rather than
 merging with one, so keys the plugin omits fall back to **herdr's defaults**, not
 to your settings. Inside the float the prefix is therefore `ctrl+b`, and detach is
-`ctrl+b d`.
+`ctrl+b q`. If your main prefix is also `ctrl+b`, give the float a `[keys]` block
+with a different prefix so the two layers do not compete for the same key.
 
 To make the float match your muscle memory, drop a `session.toml` into the plugin
 config dir with your own `[keys]` block copied from your main config; it takes
@@ -180,7 +182,7 @@ precedence over the bundled one:
 cat > "$(herdr plugin config-dir herdr-cliamp)/session.toml" <<'EOF'
 [keys]
 prefix = "ctrl+a"        # your prefix, and any other keys you want to match
-detach = "prefix+d"
+detach = "prefix+q"      # herdr's default; use whatever you bind
 
 [ui]
 sidebar_start_collapsed = true
