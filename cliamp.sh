@@ -141,7 +141,8 @@ icon_for() {
 
 # Toast the current state. Reads fresh rather than trusting a prior command.
 show_status() {
-  local json state title artist album pos dur stream icon meta progress body
+  local json state title artist album pos dur stream station icon
+  local progress headline context body
   json="$(cliamp_json)"
   if [ -z "$json" ] || ! printf '%s' "$json" | jq -e '.ok == true' >/dev/null 2>&1; then
     toast "cliamp not running" "Run the \"cliamp: open floating player\" action"
