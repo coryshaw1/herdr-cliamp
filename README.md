@@ -223,9 +223,11 @@ render in the hidden session where nobody can see them.
 
 The session bootstrap is idempotent and self-healing: it restarts the session
 server if stopped, recreates the workspace if the pane is gone, and launches
-cliamp only when it is not already the pane's foreground process. That last check
-matters — cliamp is a singleton on its IPC socket, and a second instance would
-play over the first while answering for neither.
+cliamp only when it is not already the pane's foreground process, then waits for
+it to come up. That last check matters — cliamp is launched by typing into the
+pane, so a check that wrongly says "not running" presses those characters as keys
+in the running TUI, and cliamp is a singleton on its IPC socket: a second
+instance would play over the first while answering for neither.
 
 ## Security notes
 

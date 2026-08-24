@@ -50,6 +50,9 @@ SESSION="${CLIAMP_SESSION:-music}"
 # Command that launches the TUI. `exec` matters: it makes cliamp the pane's
 # process, so quitting it closes the pane instead of dropping to a stray shell.
 CLIAMP_CMD="${CLIAMP_CMD:-cliamp}"
+# Expected process name; tolerates a path or flags in CLIAMP_CMD.
+CLIAMP_PROC="${CLIAMP_CMD%% *}"
+CLIAMP_PROC="${CLIAMP_PROC##*/}"
 # Where toasts appear.
 TOAST_POSITION="${CLIAMP_TOAST_POSITION:-top-right}"
 
@@ -201,6 +204,45 @@ transport() {
   show_status
 }
 
+pane_ids() {
+  api "$SESSION_SOCK" pane.list '{}' | python3 -c 'import json,sys
+try:
+    for p in json.load(sys.stdin)["result"]["panes"]: print(p["pane_id"])
+except Exception: pass' 2>/dev/null
+}
+
+# 0 = running here, 1 = not, 2 = unknown. argv0 is optional, so check every field.
+pane_runs_player() {
+  local info
+  info="$(api "$SESSION_SOCK" pane.process_info "$(json_obj pane_id "$1")")"
+  [ -n "$info" ] || return 2
+  printf '%s' "$info" | CLIAMP_PROC="$CLIAMP_PROC" python3 -c '
+import json, os, sys
+want = os.environ["CLIAMP_PROC"]
+def base(v):
+    return os.path.basename(v.lstrip("-")) if v else ""
+try:
+    procs = json.load(sys.stdin)["result"]["process_info"]["foreground_processes"]
+except Exception:
+    sys.exit(2)
+for p in procs:
+    cmd = (p.get("cmdline") or "").split(" ")[0]
+    if want in {base(p.get("name")), base(p.get("argv0")), base(cmd)}:
+        sys.exit(0)
+sys.exit(1)
+'
+}
+
+# Shell rc files can take seconds; wait for the process.
+wait_for_player() {
+  local pane="$1" tries="$2" i
+  for i in $(seq 1 "$tries"); do
+    pane_runs_player "$pane" && return 0
+    sleep 0.5
+  done
+  return 1
+}
+
 # ---- session bootstrap ------------------------------------------------------
 session_running() {
   "$HERDR" session list 2>/dev/null \
@@ -221,7 +263,6 @@ ensure_session() {
 
   if ! session_running; then
     "$HERDR" --session "$SESSION" server >/dev/null 2>&1 &
-    local i
     for i in $(seq 1 40); do
       [ -S "$SESSION_SOCK" ] && break
       sleep 0.25
@@ -230,30 +271,41 @@ ensure_session() {
 
   # A fresh session has no workspace; and when cliamp is quit its `exec`ed pane
   # exits, taking the tab (and sometimes the workspace) with it.
-  local panes pane info
-  panes="$(api "$SESSION_SOCK" pane.list '{}')"
-  if ! printf '%s' "$panes" | grep -q '"pane_id"'; then
+  local pane p rc unknown i
+  if [ -z "$(pane_ids)" ]; then
     api "$SESSION_SOCK" workspace.create \
       "$(json_obj label Music cwd "$HOME" focus true)" >/dev/null
-    sleep 2
-    panes="$(api "$SESSION_SOCK" pane.list '{}')"
+    for i in $(seq 1 20); do
+      [ -n "$(pane_ids)" ] && break
+      sleep 0.25
+    done
   fi
 
-  pane="$(printf '%s' "$panes" | python3 -c 'import json,sys
-try: print(json.load(sys.stdin)["result"]["panes"][0]["pane_id"])
-except Exception: pass' 2>/dev/null)"
+  # Pane order is unspecified, so ask them all.
+  pane=""
+  unknown=0
+  for p in $(pane_ids); do
+    pane_runs_player "$p"
+    rc=$?
+    [ "$rc" -eq 0 ] && return 0
+    [ "$rc" -eq 2 ] && unknown=1
+    [ -n "$pane" ] || pane="$p"
+  done
   [ -n "$pane" ] || return 1
 
-  # Launch only if cliamp is not already this pane's foreground process. Testing
-  # the pane (rather than a bare pgrep) keeps the singleton correct: cliamp owns
-  # one IPC socket, and a second instance would answer for neither.
-  info="$(api "$SESSION_SOCK" pane.process_info "$(json_obj pane_id "$pane")")"
-  if ! printf '%s' "$info" | grep -q '"argv0":"cliamp"'; then
+  # Cannot tell? If the socket answers, do not type into the pane.
+  if [ "$unknown" -eq 1 ] && cliamp_running; then
+    return 0
+  fi
+
+  # A busy shell swallows the text, so retry.
+  for i in 1 2; do
     api "$SESSION_SOCK" pane.send_text \
       "$(json_obj pane_id "$pane" text "exec $CLIAMP_CMD
 ")" >/dev/null
-    sleep 1
-  fi
+    wait_for_player "$pane" 16 && return 0
+  done
+  return 1
 }
 
 # The plugin pane carries the [[panes]] title as its label, so an already-open
