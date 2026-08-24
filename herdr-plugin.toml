@@ -15,7 +15,7 @@
 
 id = "herdr-cliamp"
 name = "herdr cliamp"
-version = "0.1.0"
+version = "0.1.1"
 min_herdr_version = "0.8.0"
 description = "Floating cliamp that keeps playing when hidden: it lives in a detached herdr session, so closing the float only detaches. Adds now-playing toasts and transport controls that work from any workspace."
 platforms = ["linux", "macos"]
